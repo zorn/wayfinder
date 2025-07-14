@@ -20,7 +20,7 @@ defmodule WayfinderWeb.Telemetry do
     Supervisor.init(children, strategy: :one_for_one)
   end
 
-  @spec metrics() :: [Telemetry.Metrics.t()]
+  @spec metrics() :: [Telemetry.Metrics.Summary.t()]
   def metrics do
     [
       # Phoenix Metrics
