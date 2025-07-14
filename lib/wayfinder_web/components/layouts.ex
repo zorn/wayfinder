@@ -9,6 +9,8 @@ defmodule WayfinderWeb.Layouts do
   """
   use WayfinderWeb, :html
 
+  alias Phoenix.LiveView.Rendered
+
   embed_templates "layouts/*"
 
   @doc """
@@ -29,6 +31,7 @@ defmodule WayfinderWeb.Layouts do
 
   slot :inner_block, required: true
 
+  @spec app(assigns :: map()) :: Rendered.t()
   def app(assigns) do
     ~H"""
     <header class="navbar px-4 sm:px-6 lg:px-8">
@@ -78,6 +81,7 @@ defmodule WayfinderWeb.Layouts do
   attr :flash, :map, required: true, doc: "the map of flash messages"
   attr :id, :string, default: "flash-group", doc: "the optional id of flash container"
 
+  @spec flash_group(assigns :: map()) :: Rendered.t()
   def flash_group(assigns) do
     ~H"""
     <div id={@id} aria-live="polite">
@@ -116,6 +120,7 @@ defmodule WayfinderWeb.Layouts do
 
   See <head> in root.html.heex which applies the theme before page load.
   """
+  @spec theme_toggle(assigns :: map()) :: Rendered.t()
   def theme_toggle(assigns) do
     ~H"""
     <div class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full">
