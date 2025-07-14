@@ -33,6 +33,14 @@ defmodule Wayfinder.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      # For code logic style and enforcement.
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+
+      # For security scans.
+      {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
+
+      # Uncategorized
       {:phoenix, "~> 1.8.0-rc.3", override: true},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.10"},
@@ -80,7 +88,9 @@ defmodule Wayfinder.MixProject do
         "tailwind wayfinder --minify",
         "esbuild wayfinder --minify",
         "phx.digest"
-      ]
+      ],
+      # A single task simulating the CI checks that will run.
+      check: ["credo --strict", "dialyzer", "sobelow"]
     ]
   end
 end

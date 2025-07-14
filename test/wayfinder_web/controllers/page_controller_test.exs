@@ -1,5 +1,5 @@
 defmodule WayfinderWeb.PageControllerTest do
-  use WayfinderWeb.ConnCase
+  use WayfinderWeb.ConnCase, async: true
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
