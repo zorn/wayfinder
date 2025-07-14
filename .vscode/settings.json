@@ -3,14 +3,21 @@
         "amannn",
         "daisyui",
         "Ecto",
+        "erlef",
         "esbuild",
         "heroicons",
+        "isready",
+        "loadpaths",
         "MAILGUN",
         "oklch",
+        "plts",
         "prefersdark",
+        "Rebar",
+        "sobelow",
         "tailwindlabs",
         "topbar",
         "Uncategorized",
+        "Valim",
         "Wayfinder"
     ]
 }
