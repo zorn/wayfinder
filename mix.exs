@@ -89,6 +89,7 @@ defmodule Wayfinder.MixProject do
         "esbuild wayfinder --minify",
         "phx.digest"
       ],
+      # A single task simulating the CI checks that will run.
       check: ["credo --strict", "dialyzer", "sobelow"]
     ]
   end
