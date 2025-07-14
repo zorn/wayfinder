@@ -10,7 +10,12 @@
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
-    <script>
+
+    <%!-- The default Phoenix template will include this inline script to help
+    power the dark/light mode toggle on the default home page. Inline scripts
+    are not allowed in the content security policy currently, and rather than
+    add it I will comment out the script for now. --%>
+    <%!-- <script>
       (() => {
         const setTheme = (theme) => {
           if (theme === "system") {
@@ -27,7 +32,7 @@
         window.addEventListener("storage", (e) => e.key === "phx:theme" && setTheme(e.newValue || "system"));
         window.addEventListener("phx:set-theme", ({ detail: { theme } }) => setTheme(theme));
       })();
-    </script>
+    </script> --%>
   </head>
   <body>
     {@inner_content}
