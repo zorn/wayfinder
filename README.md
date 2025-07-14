@@ -1,5 +1,9 @@
 # Wayfinder
 
+Wayfinder is a project that hopes to help software creators better track customer success and communication.
+
+## Phoenix README Defaults
+
 To start your Phoenix server:
 
 * Run `mix setup` to install and setup dependencies
