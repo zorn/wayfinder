@@ -88,7 +88,8 @@ defmodule Wayfinder.MixProject do
         "tailwind wayfinder --minify",
         "esbuild wayfinder --minify",
         "phx.digest"
-      ]
+      ],
+      check: ["credo --strict", "dialyzer", "sobelow"]
     ]
   end
 end
