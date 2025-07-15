@@ -10,7 +10,17 @@ defmodule Wayfinder.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+
+      # Docs
+      name: "Wayfinder",
+      source_url: "https://github.com/zorn/wayfinder",
+      # homepage_url: "https://example.com",
+      docs: [
+        # The main page in the docs
+        main: "Wayfinder",
+        extras: ["README.md"]
+      ]
     ]
   end
 
@@ -33,6 +43,9 @@ defmodule Wayfinder.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      # For docs
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false, warn_if_outdated: true},
+
       # For code logic style and enforcement.
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
