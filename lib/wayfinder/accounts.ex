@@ -64,20 +64,41 @@ defmodule Wayfinder.Accounts do
 
   @doc """
   Registers a user.
-
-  ## Examples
-
-      iex> register_user(%{field: value})
-      {:ok, %User{}}
-
-      iex> register_user(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
   """
-  def register_user(attrs) do
-    %User{}
-    |> User.email_changeset(attrs)
+  @spec register_user(
+          email :: String.t(),
+          password :: String.t()
+        ) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
+  def register_user(email, password) do
+    %{email: email, password: password}
+    |> User.registration_changeset()
     |> Repo.insert()
+  end
+
+  @doc """
+  Returns a changeset appropriate for registering a new user.
+
+  ## Options
+
+  * `:action` - An optional atom applied to the changeset's `:action` attribute. Useful for forms that
+    look to a changeset's action to influence form presentation.
+  """
+  @spec user_registration_changeset(
+          email :: String.t(),
+          password :: String.t()
+        ) :: Ecto.Changeset.t()
+  def user_registration_changeset(email \\ "", password \\ "", opts \\ []) do
+    opts = Keyword.validate!(opts, action: nil)
+
+    changeset =
+      %{email: email, password: password}
+      |> User.registration_changeset()
+
+    if opts[:action] do
+      Map.put(changeset, :action, opts[:action])
+    else
+      changeset
+    end
   end
 
   ## Settings
