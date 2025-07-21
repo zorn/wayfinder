@@ -44,6 +44,7 @@ defmodule Wayfinder.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:argon2_elixir, "~> 4.0"},
       # For docs
       {:ex_doc, "~> 0.34", only: :dev, runtime: false, warn_if_outdated: true},
 
