@@ -14,7 +14,9 @@ defmodule Wayfinder.AccountsFixtures do
 
   def valid_user_attributes(attrs \\ %{}) do
     Enum.into(attrs, %{
-      email: unique_user_email()
+      email: unique_user_email(),
+      password: "some-good-test-password",
+      password_confirmation: "some-good-test-password"
     })
   end
 
@@ -22,23 +24,16 @@ defmodule Wayfinder.AccountsFixtures do
     {:ok, user} =
       attrs
       |> valid_user_attributes()
+      |> Accounts.cast_user_registration_attrs()
       |> Accounts.register_user()
 
     user
   end
 
+  # FIXME: Feels odd for the fixture to have named fixtures for `unconfirmed`
+  # and then this -- with no changes. Should clean up.
   def user_fixture(attrs \\ %{}) do
-    user = unconfirmed_user_fixture(attrs)
-
-    token =
-      extract_user_token(fn url ->
-        Accounts.deliver_login_instructions(user, url)
-      end)
-
-    {:ok, {user, _expired_tokens}} =
-      Accounts.login_user_by_magic_link(token)
-
-    user
+    unconfirmed_user_fixture(attrs)
   end
 
   def user_scope_fixture do

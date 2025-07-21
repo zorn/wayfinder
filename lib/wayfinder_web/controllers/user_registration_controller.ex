@@ -19,13 +19,9 @@ defmodule WayfinderWeb.UserRegistrationController do
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, %{"user" => user_params}) do
-    %{
-      "email" => email,
-      "password" => password,
-      "password_confirmation" => password_confirmation
-    } = user_params
+    attrs = Accounts.cast_user_registration_attrs(user_params)
 
-    case Accounts.register_user(email, password, password_confirmation) do
+    case Accounts.register_user(attrs) do
       {:ok, user} ->
         conn
         |> put_flash(:info, "User created successfully.")
