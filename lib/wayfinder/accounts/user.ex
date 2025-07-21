@@ -56,7 +56,6 @@ defmodule Wayfinder.Accounts.User do
     |> cast(attrs, [:email, :password])
     |> validate_required([:email, :password])
     |> validate_email(opts)
-    # Q: Why not do the confirmation in the `validate_password` function?
     |> validate_confirmation(:password, message: "does not match password")
     |> validate_password(opts)
   end

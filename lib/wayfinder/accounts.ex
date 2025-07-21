@@ -67,10 +67,15 @@ defmodule Wayfinder.Accounts do
   """
   @spec register_user(
           email :: String.t(),
-          password :: String.t()
+          password :: String.t(),
+          password_confirmation :: String.t()
         ) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
-  def register_user(email, password) do
-    %{email: email, password: password}
+  def register_user(email, password, password_confirmation) do
+    %{
+      email: email,
+      password: password,
+      password_confirmation: password_confirmation
+    }
     |> User.registration_changeset()
     |> Repo.insert()
   end
@@ -85,13 +90,20 @@ defmodule Wayfinder.Accounts do
   """
   @spec user_registration_changeset(
           email :: String.t(),
-          password :: String.t()
+          password :: String.t(),
+          password_confirmation :: String.t(),
+          opts :: Keyword.t()
         ) :: Ecto.Changeset.t()
-  def user_registration_changeset(email \\ "", password \\ "", opts \\ []) do
+  def user_registration_changeset(
+        email \\ "",
+        password \\ "",
+        password_confirmation \\ "",
+        opts \\ []
+      ) do
     opts = Keyword.validate!(opts, action: nil)
 
     changeset =
-      %{email: email, password: password}
+      %{email: email, password: password, password_confirmation: password_confirmation}
       |> User.registration_changeset()
 
     if opts[:action] do
