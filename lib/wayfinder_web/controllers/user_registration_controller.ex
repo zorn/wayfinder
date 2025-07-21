@@ -5,8 +5,13 @@ defmodule WayfinderWeb.UserRegistrationController do
   alias WayfinderWeb.UserAuth
 
   @spec new(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def new(%{assigns: %{current_scope: %{user: user}}} = conn, _params) when not is_nil(user) do
+    conn
+    |> put_flash(:error, "You can not register a new account while logged in.")
+    |> redirect(to: WayfinderWeb.UserAuth.signed_in_path(conn))
+  end
+
   def new(conn, _params) do
-    # Q: Do I need to kick out the user if they're already logged in?
     changeset = Accounts.user_registration_changeset()
     form = Phoenix.Component.to_form(changeset)
     render(conn, :new, form: form)
