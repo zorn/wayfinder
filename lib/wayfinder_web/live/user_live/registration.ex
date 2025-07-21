@@ -1,8 +1,60 @@
 defmodule WayfinderWeb.UserLive.Registration do
+  @moduledoc """
+  A live view that presents a user registration form.
+  """
+
   use WayfinderWeb, :live_view
 
   alias Wayfinder.Accounts
-  alias Wayfinder.Accounts.User
+
+  def mount(_params, _session, %{assigns: %{current_scope: %{user: user}}} = socket)
+      when not is_nil(user) do
+    # A currently authenticated user should not be allowed to register.
+    # Redirect authenticated users away from the registration form.
+    {:ok, redirect(socket, to: WayfinderWeb.UserAuth.signed_in_path(socket))}
+  end
+
+  def mount(_params, _session, socket) do
+    changeset = Accounts.user_registration_changeset()
+
+    {:ok, assign_form(socket, changeset), temporary_assigns: [form: nil]}
+  end
+
+  def handle_event("save", %{"user" => user_params}, socket) do
+    %{"email" => email, "password" => password} = user_params
+
+    case Accounts.register_user(email, password) do
+      {:ok, user} ->
+        {:ok, _} =
+          Accounts.deliver_login_instructions(
+            user,
+            &url(~p"/users/log-in/#{&1}")
+          )
+
+        {:noreply,
+         socket
+         |> put_flash(
+           :info,
+           "An email was sent to #{user.email}, please access it to confirm your account."
+         )
+         |> push_navigate(to: ~p"/users/log-in")}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign_form(socket, changeset)}
+    end
+  end
+
+  def handle_event("validate", %{"user" => user_params}, socket) do
+    %{"email" => email, "password" => password} = user_params
+
+    changeset = Accounts.user_registration_changeset(email, password, action: :validate)
+    {:noreply, assign_form(socket, changeset)}
+  end
+
+  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
+    form = to_form(changeset, as: "user")
+    assign(socket, form: form)
+  end
 
   def render(assigns) do
     ~H"""
@@ -31,6 +83,21 @@ defmodule WayfinderWeb.UserLive.Registration do
             phx-mounted={JS.focus()}
           />
 
+          <.input
+            field={@form[:password]}
+            type="password"
+            label="Password"
+            autocomplete="new-password"
+          />
+
+          <.input
+            field={@form[:password_confirmation]}
+            type="password"
+            label="Confirm password"
+            autocomplete="new-password"
+            required
+          />
+
           <.button phx-disable-with="Creating account..." class="btn btn-primary w-full">
             Create an account
           </.button>
@@ -38,48 +105,5 @@ defmodule WayfinderWeb.UserLive.Registration do
       </div>
     </Layouts.app>
     """
-  end
-
-  def mount(_params, _session, %{assigns: %{current_scope: %{user: user}}} = socket)
-      when not is_nil(user) do
-    {:ok, redirect(socket, to: WayfinderWeb.UserAuth.signed_in_path(socket))}
-  end
-
-  def mount(_params, _session, socket) do
-    changeset = Accounts.change_user_email(%User{})
-
-    {:ok, assign_form(socket, changeset), temporary_assigns: [form: nil]}
-  end
-
-  def handle_event("save", %{"user" => user_params}, socket) do
-    case Accounts.register_user(user_params) do
-      {:ok, user} ->
-        {:ok, _} =
-          Accounts.deliver_login_instructions(
-            user,
-            &url(~p"/users/log-in/#{&1}")
-          )
-
-        {:noreply,
-         socket
-         |> put_flash(
-           :info,
-           "An email was sent to #{user.email}, please access it to confirm your account."
-         )
-         |> push_navigate(to: ~p"/users/log-in")}
-
-      {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign_form(socket, changeset)}
-    end
-  end
-
-  def handle_event("validate", %{"user" => user_params}, socket) do
-    changeset = Accounts.change_user_email(%User{}, user_params)
-    {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
-  end
-
-  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
-    form = to_form(changeset, as: "user")
-    assign(socket, form: form)
   end
 end
