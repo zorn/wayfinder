@@ -22,7 +22,7 @@ config :wayfinder, :scopes,
 
 config :wayfinder,
   ecto_repos: [Wayfinder.Repo],
-  generators: [timestamp_type: :utc_datetime, binary_id: true]
+  generators: [timestamp_type: :utc_datetime_usec, binary_id: true]
 
 # Configures the endpoint
 config :wayfinder, WayfinderWeb.Endpoint,
