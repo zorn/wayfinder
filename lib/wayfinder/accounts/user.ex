@@ -81,6 +81,8 @@ defmodule Wayfinder.Accounts.User do
     changeset =
       changeset
       |> validate_required([:email])
+      # FIXME: This currently allows values like `1@2` which doesn't seem valid.
+      # Update this when I'm cleaning up the tests.
       |> validate_format(:email, ~r/^[^@,;\s]+@[^@,;\s]+$/,
         message: "must have the @ sign and no spaces"
       )
