@@ -1,85 +1,24 @@
 defmodule Wayfinder.Accounts do
   @moduledoc """
-  The Accounts context.
+  Provides functions related to users, including registration, editing, authentication, and session management.
   """
 
   import Ecto.Query, warn: false
+
+  alias Wayfinder.Accounts.User
+  alias Wayfinder.Accounts.UserNotifier
+  alias Wayfinder.Accounts.UserToken
   alias Wayfinder.Repo
 
-  alias Wayfinder.Accounts.{User, UserToken, UserNotifier}
-
-  ## Database getters
-
-  @doc """
-  Gets a user by email.
-
-  ## Examples
-
-      iex> get_user_by_email("foo@example.com")
-      %User{}
-
-      iex> get_user_by_email("unknown@example.com")
-      nil
-
-  """
-  def get_user_by_email(email) when is_binary(email) do
-    Repo.get_by(User, email: email)
-  end
-
-  @doc """
-  Gets a user by email and password.
-
-  ## Examples
-
-      iex> get_user_by_email_and_password("foo@example.com", "correct_password")
-      %User{}
-
-      iex> get_user_by_email_and_password("foo@example.com", "invalid_password")
-      nil
-
-  """
-  def get_user_by_email_and_password(email, password)
-      when is_binary(email) and is_binary(password) do
-    user = Repo.get_by(User, email: email)
-    if User.valid_password?(user, password), do: user
-  end
-
-  @doc """
-  Gets a single user.
-
-  Raises `Ecto.NoResultsError` if the User does not exist.
-
-  ## Examples
-
-      iex> get_user!(123)
-      %User{}
-
-      iex> get_user!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_user!(id), do: Repo.get!(User, id)
-
-  ## User registration
-
   @typedoc """
-  An attribute map payload value for registering a user.
+  A map value describing the attributes related to registering a user via the
+  `register_user/1` function.
   """
   @type user_registration_attrs :: %{
           optional(:email) => String.t(),
           optional(:password) => String.t(),
           optional(:password_confirmation) => String.t()
         }
-
-  @doc """
-  Registers a user.
-  """
-  @spec register_user(user_registration_attrs()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
-  def register_user(attrs) do
-    attrs
-    |> User.registration_changeset()
-    |> Repo.insert()
-  end
 
   @doc """
   Returns a `t:user_registration_attrs/0` value from a Map.
@@ -105,6 +44,46 @@ defmodule Wayfinder.Accounts do
       password: get_map_value(input, :password),
       password_confirmation: get_map_value(input, :password_confirmation)
     }
+  end
+
+  @doc """
+  Returns a `Wayfinder.Accounts.User` entity for the given email address.
+  """
+  @spec get_user_by_email(email :: String.t()) :: User.t() | nil
+  def get_user_by_email(email) when is_binary(email) do
+    Repo.get_by(User, email: email)
+  end
+
+  @doc """
+  Returns a `Wayfinder.Accounts.User` entity for the given email address
+  and password.
+  """
+  @spec get_user_by_email_and_password(
+          email :: String.t(),
+          password :: String.t()
+        ) :: User.t() | nil
+  def get_user_by_email_and_password(email, password)
+      when is_binary(email) and is_binary(password) do
+    user = Repo.get_by(User, email: email)
+    if User.valid_password?(user, password), do: user
+  end
+
+  @doc """
+  Returns a `Wayfinder.Accounts.User` entity for the given identity.
+
+  Raises `Ecto.NoResultsError` if no entity exists.
+  """
+  @spec get_user!(id :: User.id()) :: User.t()
+  def get_user!(id), do: Repo.get!(User, id)
+
+  @doc """
+  Creates a `Wayfinder.Accounts.User` entity.
+  """
+  @spec register_user(user_registration_attrs()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
+  def register_user(attrs) do
+    attrs
+    |> User.registration_changeset()
+    |> Repo.insert()
   end
 
   defp get_map_value(map, key) do
@@ -289,8 +268,6 @@ defmodule Wayfinder.Accounts do
     Repo.delete_all(from(UserToken, where: [token: ^token, context: "session"]))
     :ok
   end
-
-  ## Token helper
 
   defp update_user_and_delete_all_tokens(changeset) do
     Repo.transact(fn ->
