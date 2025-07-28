@@ -162,6 +162,7 @@ defmodule Wayfinder.Accounts.User do
     change(user, confirmed_at: now)
   end
 
+  # TODO: Move this out of the schema file?
   @doc """
   Verifies the password.
 
