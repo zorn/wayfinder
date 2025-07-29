@@ -25,3 +25,5 @@ We accept this tradeoff, as we want people to get into the system and look aroun
 ## Change: Registration Form is a Controller over LiveView
 
 While the documented (see Command Line History) generator preferred LiveView for the related pages, we converted the Registration page to a standard controller, allowing us to log the user in more quickly.
+
+## Change: Renamed `register_user/1` to `create_user/1`.
