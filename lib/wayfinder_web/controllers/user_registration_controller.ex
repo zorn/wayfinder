@@ -12,16 +12,16 @@ defmodule WayfinderWeb.UserRegistrationController do
   end
 
   def new(conn, _params) do
-    changeset = Accounts.user_registration_changeset()
+    changeset = Accounts.create_user_changeset()
     form = Phoenix.Component.to_form(changeset)
     render(conn, :new, form: form)
   end
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, %{"user" => user_params}) do
-    attrs = Accounts.cast_user_registration_attrs(user_params)
+    attrs = Accounts.cast_create_user_attrs(user_params)
 
-    case Accounts.register_user(attrs) do
+    case Accounts.create_user(attrs) do
       {:ok, user} ->
         conn
         |> put_flash(:info, "User created successfully.")

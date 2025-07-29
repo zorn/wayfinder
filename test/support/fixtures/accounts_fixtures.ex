@@ -24,8 +24,8 @@ defmodule Wayfinder.AccountsFixtures do
     {:ok, user} =
       attrs
       |> valid_user_attributes()
-      |> Accounts.cast_user_registration_attrs()
-      |> Accounts.register_user()
+      |> Accounts.cast_create_user_attrs()
+      |> Accounts.create_user()
 
     user
   end
