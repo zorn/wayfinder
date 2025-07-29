@@ -1,6 +1,6 @@
 defmodule Wayfinder.Accounts do
   @moduledoc """
-  Provides functions related to users, including registration, editing, authentication, and session management.
+  Provides functions related to user accounts, including user registration, user profile editing, authentication, and session management.
   """
 
   import Ecto.Query, warn: false
@@ -10,35 +10,27 @@ defmodule Wayfinder.Accounts do
   alias Wayfinder.Accounts.UserToken
   alias Wayfinder.Repo
 
-  @typedoc """
-  A map value describing the attributes related to registering a user via the
-  `register_user/1` function.
-  """
-  @type user_registration_attrs :: %{
-          optional(:email) => String.t(),
-          optional(:password) => String.t(),
-          optional(:password_confirmation) => String.t()
-        }
-
   @doc """
-  Returns a `t:user_registration_attrs/0` value from a Map.
+  Returns an atom-based `t:create_user_attrs/0` value from an incoming (possibly
+  string-based) Map value.
 
-  This particularly useful when needing to convert a string-keyed map to an
-  atom-keyed `attrs` argument.
+  This function is useful for call sites that need to convert a externally
+  sourced string-keyed Map (think web form payloads) to a well shaped atom-keyed
+  `attrs` argument appropriate for the `create_user/1` function.
 
-  If the passed in argument is already using atom keys, it will be returned as is.
+  If the passed in argument is already using atom keys, it will be returned as
+  is.
 
-  ## Example
+  ## Examples
 
-      iex> cast_user_registration_attrs(%{"email" => "foo@example.com", "password" => "password", "password_confirmation" => "password"})
+      iex> cast_create_user_attrs(%{"email" => "foo@example.com", "password" => "password", "password_confirmation" => "password"})
       %{email: "foo@example.com", password: "password", password_confirmation: "password"}
 
-      iex> cast_user_registration_attrs(%{email: "foo@example.com", admin: "true"})
-      %{email: "foo@example.com"}
+      iex> cast_create_user_attrs(%{email: "foo@example.com", admin: "true"})
+      %{email: "foo@example.com", password: nil, password_confirmation: nil}
   """
-  # FIXME: I should be able to doctest this.
-  @spec cast_user_registration_attrs(input :: map()) :: user_registration_attrs()
-  def cast_user_registration_attrs(input) do
+  @spec cast_create_user_attrs(input :: map()) :: create_user_attrs()
+  def cast_create_user_attrs(input) do
     %{
       email: get_map_value(input, :email),
       password: get_map_value(input, :password),
@@ -79,30 +71,40 @@ defmodule Wayfinder.Accounts do
   @doc """
   Creates a `Wayfinder.Accounts.User` entity.
   """
-  @spec register_user(user_registration_attrs()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
-  def register_user(attrs) do
+  @spec create_user(create_user_attrs()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
+  def create_user(attrs) do
     attrs
     |> User.registration_changeset()
     |> Repo.insert()
   end
+
+  @typedoc """
+  A map value shape related to the attributes used when creating a
+  `Wayfinder.Accounts.User` entity via the `create_user/1` function.
+  """
+  @type create_user_attrs :: %{
+          optional(:email) => String.t(),
+          optional(:password) => String.t(),
+          optional(:password_confirmation) => String.t()
+        }
 
   defp get_map_value(map, key) do
     map[key] || map[Atom.to_string(key)]
   end
 
   @doc """
-  Returns a changeset appropriate for registering a new user.
+  Returns a changeset appropriate for creating a new user.
 
   ## Options
 
   * `:action` - An optional atom applied to the changeset's `:action` attribute. Useful for forms that
     look to a changeset's action to influence form presentation.
   """
-  @spec user_registration_changeset(
-          attrs :: user_registration_attrs(),
+  @spec create_user_changeset(
+          attrs :: create_user_attrs(),
           opts :: Keyword.t()
         ) :: Ecto.Changeset.t()
-  def user_registration_changeset(attrs \\ %{}, opts \\ []) do
+  def create_user_changeset(attrs \\ %{}, opts \\ []) do
     opts = Keyword.validate!(opts, action: nil)
 
     changeset = User.registration_changeset(attrs)
@@ -134,12 +136,6 @@ defmodule Wayfinder.Accounts do
   Returns an `%Ecto.Changeset{}` for changing the user email.
 
   See `Wayfinder.Accounts.User.email_changeset/3` for a list of supported options.
-
-  ## Examples
-
-      iex> change_user_email(user)
-      %Ecto.Changeset{data: %User{}}
-
   """
   def change_user_email(user, attrs \\ %{}, opts \\ []) do
     User.email_changeset(user, attrs, opts)
@@ -170,12 +166,6 @@ defmodule Wayfinder.Accounts do
   Returns an `%Ecto.Changeset{}` for changing the user password.
 
   See `Wayfinder.Accounts.User.password_changeset/3` for a list of supported options.
-
-  ## Examples
-
-      iex> change_user_password(user)
-      %Ecto.Changeset{data: %User{}}
-
   """
   def change_user_password(user, attrs \\ %{}, opts \\ []) do
     User.password_changeset(user, attrs, opts)
@@ -185,15 +175,6 @@ defmodule Wayfinder.Accounts do
   Updates the user password.
 
   Returns a tuple with the updated user, as well as a list of expired tokens.
-
-  ## Examples
-
-      iex> update_user_password(user, %{password: ...})
-      {:ok, {%User{}, [...]}}
-
-      iex> update_user_password(user, %{password: "too short"})
-      {:error, %Ecto.Changeset{}}
-
   """
   def update_user_password(user, attrs) do
     user
@@ -236,12 +217,6 @@ defmodule Wayfinder.Accounts do
 
   @doc ~S"""
   Delivers the update email instructions to the given user.
-
-  ## Examples
-
-      iex> deliver_user_update_email_instructions(user, current_email, &url(~p"/users/settings/confirm-email/#{&1}"))
-      {:ok, %{to: ..., body: ...}}
-
   """
   def deliver_user_update_email_instructions(%User{} = user, current_email, update_email_url_fun)
       when is_function(update_email_url_fun, 1) do

@@ -1,10 +1,17 @@
 defmodule Wayfinder.AccountsTest do
-  use Wayfinder.DataCase
+  use Wayfinder.DataCase, async: true
 
-  alias Wayfinder.Accounts
+  doctest Wayfinder.Accounts, import: true
 
   import Wayfinder.AccountsFixtures
-  alias Wayfinder.Accounts.{User, UserToken}
+
+  alias Wayfinder.Accounts
+  alias Wayfinder.Accounts.User
+  alias Wayfinder.Accounts.UserToken
+
+  describe "cast_create_user_attrs/1" do
+    # Logic verified through `doctest` examples.
+  end
 
   describe "get_user_by_email/1" do
     test "does not return the user if the email does not exist" do
