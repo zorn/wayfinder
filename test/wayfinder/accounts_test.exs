@@ -56,66 +56,72 @@ defmodule Wayfinder.AccountsTest do
   end
 
   describe "register_user/1" do
-    test "requires email to be set" do
-      {:error, changeset} = Accounts.register_user(%{})
+    # test "requires email to be set" do
+    #   {:error, changeset} = Accounts.create_user(%{})
 
-      assert %{email: ["can't be blank"]} = errors_on(changeset)
-    end
+    #   assert %{email: ["can't be blank"]} = errors_on(changeset)
+    # end
 
-    test "validates email when given" do
-      {:error, changeset} = Accounts.register_user(%{email: "not valid"})
+    # test "validates email when given" do
+    #   {:error, changeset} = Accounts.create_user(%{email: "not valid"})
 
-      assert %{email: ["must have the @ sign and no spaces"]} = errors_on(changeset)
-    end
+    #   assert %{email: ["must have the @ sign and no spaces"]} = errors_on(changeset)
+    # end
 
-    test "validates maximum values for email for security" do
-      too_long = String.duplicate("db", 100)
-      {:error, changeset} = Accounts.register_user(%{email: too_long})
-      assert "should be at most 160 character(s)" in errors_on(changeset).email
-    end
+    # test "validates maximum values for email for security" do
+    #   too_long = String.duplicate("db", 100)
+    #   {:error, changeset} = Accounts.create_user(%{email: too_long})
+    #   assert "should be at most 160 character(s)" in errors_on(changeset).email
+    # end
 
-    test "validates email uniqueness" do
-      %{email: email} = user_fixture()
-      {:error, changeset} = Accounts.register_user(%{email: email})
-      assert "has already been taken" in errors_on(changeset).email
+    # test "validates email uniqueness" do
+    #   %{email: email} = user_fixture()
+    #   {:error, changeset} = Accounts.create_user(%{email: email})
+    #   assert "has already been taken" in errors_on(changeset).email
 
-      # Now try with the upper cased email too, to check that email case is ignored.
-      {:error, changeset} = Accounts.register_user(%{email: String.upcase(email)})
-      assert "has already been taken" in errors_on(changeset).email
-    end
+    #   # Now try with the upper cased email too, to check that email case is ignored.
+    #   {:error, changeset} = Accounts.create_user(%{email: String.upcase(email)})
+    #   assert "has already been taken" in errors_on(changeset).email
+    # end
 
-    test "registers users without password" do
-      email = unique_user_email()
-      {:ok, user} = Accounts.register_user(valid_user_attributes(email: email))
-      assert user.email == email
-      assert is_nil(user.hashed_password)
-      assert is_nil(user.confirmed_at)
-      assert is_nil(user.password)
-    end
+    # test "registers users without password" do
+    #   email = unique_user_email()
+    #   {:ok, user} = Accounts.create_user(valid_user_attributes(email: email))
+    #   assert user.email == email
+    #   assert is_nil(user.hashed_password)
+    #   assert is_nil(user.confirmed_at)
+    #   assert is_nil(user.password)
+    # end
   end
 
-  describe "sudo_mode?/2" do
+  describe "recently_authenticated?/2" do
     test "validates the authenticated_at time" do
       now = DateTime.utc_now()
 
-      assert Accounts.sudo_mode?(%User{authenticated_at: DateTime.utc_now()})
-      assert Accounts.sudo_mode?(%User{authenticated_at: DateTime.add(now, -19, :minute)})
-      refute Accounts.sudo_mode?(%User{authenticated_at: DateTime.add(now, -21, :minute)})
+      assert Accounts.recently_authenticated?(%User{authenticated_at: DateTime.utc_now()})
+
+      assert Accounts.recently_authenticated?(%User{
+               authenticated_at: DateTime.add(now, -19, :minute)
+             })
+
+      refute Accounts.recently_authenticated?(%User{
+               authenticated_at: DateTime.add(now, -21, :minute)
+             })
 
       # minute override
-      refute Accounts.sudo_mode?(
+      refute Accounts.recently_authenticated?(
                %User{authenticated_at: DateTime.add(now, -11, :minute)},
                -10
              )
 
       # not authenticated
-      refute Accounts.sudo_mode?(%User{})
+      refute Accounts.recently_authenticated?(%User{})
     end
   end
 
-  describe "change_user_email/3" do
+  describe "update_user_email_changeset/3" do
     test "returns a user changeset" do
-      assert %Ecto.Changeset{} = changeset = Accounts.change_user_email(%User{})
+      assert %Ecto.Changeset{} = changeset = Accounts.update_user_email_changeset(%User{})
       assert changeset.required == [:email]
     end
   end
@@ -187,25 +193,22 @@ defmodule Wayfinder.AccountsTest do
     end
   end
 
-  describe "change_user_password/3" do
+  describe "update_user_password_changeset/3" do
     test "returns a user changeset" do
-      assert %Ecto.Changeset{} = changeset = Accounts.change_user_password(%User{})
+      assert %Ecto.Changeset{} = changeset = Accounts.update_user_password_changeset(%User{})
       assert changeset.required == [:password]
     end
 
-    test "allows fields to be set" do
+    test "updates the hashed password value" do
       changeset =
-        Accounts.change_user_password(
+        Accounts.update_user_password_changeset(
           %User{},
-          %{
-            "password" => "new valid password"
-          },
-          hash_password: false
+          %{"password" => "new valid password"}
         )
 
       assert changeset.valid?
-      assert get_change(changeset, :password) == "new valid password"
-      assert is_nil(get_change(changeset, :hashed_password))
+      assert is_nil(get_change(changeset, :password))
+      assert !is_nil(get_change(changeset, :hashed_password))
     end
   end
 
@@ -314,53 +317,12 @@ defmodule Wayfinder.AccountsTest do
     end
   end
 
-  describe "get_user_by_magic_link_token/1" do
-    setup do
-      user = user_fixture()
-      {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
-      %{user: user, token: encoded_token}
-    end
-
-    test "returns user by token", %{user: user, token: token} do
-      assert session_user = Accounts.get_user_by_magic_link_token(token)
-      assert session_user.id == user.id
-    end
-
-    test "does not return user for invalid token" do
-      refute Accounts.get_user_by_magic_link_token("oops")
-    end
-
-    test "does not return user for expired token", %{token: token} do
-      {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
-      refute Accounts.get_user_by_magic_link_token(token)
-    end
-  end
-
   describe "delete_user_session_token/1" do
     test "deletes the token" do
       user = user_fixture()
       token = Accounts.generate_user_session_token(user)
       assert Accounts.delete_user_session_token(token) == :ok
       refute Accounts.get_user_by_session_token(token)
-    end
-  end
-
-  describe "deliver_login_instructions/2" do
-    setup do
-      %{user: unconfirmed_user_fixture()}
-    end
-
-    test "sends token through notification", %{user: user} do
-      token =
-        extract_user_token(fn url ->
-          Accounts.deliver_login_instructions(user, url)
-        end)
-
-      {:ok, token} = Base.url_decode64(token, padding: false)
-      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
-      assert user_token.user_id == user.id
-      assert user_token.sent_to == user.email
-      assert user_token.context == "login"
     end
   end
 

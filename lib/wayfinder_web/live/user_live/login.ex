@@ -1,8 +1,6 @@
 defmodule WayfinderWeb.UserLive.Login do
   use WayfinderWeb, :live_view
 
-  alias Wayfinder.Accounts
-
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
@@ -105,22 +103,23 @@ defmodule WayfinderWeb.UserLive.Login do
     {:noreply, assign(socket, :trigger_submit, true)}
   end
 
-  def handle_event("submit_magic", %{"user" => %{"email" => email}}, socket) do
-    if user = Accounts.get_user_by_email(email) do
-      Accounts.deliver_login_instructions(
-        user,
-        &url(~p"/users/log-in/#{&1}")
-      )
-    end
+  # FIXME: Remove
+  # def handle_event("submit_magic", %{"user" => %{"email" => email}}, socket) do
+  #   if user = Accounts.get_user_by_email(email) do
+  #     Accounts.deliver_login_instructions(
+  #       user,
+  #       &url(~p"/users/log-in/#{&1}")
+  #     )
+  #   end
 
-    info =
-      "If your email is in our system, you will receive instructions for logging in shortly."
+  #   info =
+  #     "If your email is in our system, you will receive instructions for logging in shortly."
 
-    {:noreply,
-     socket
-     |> put_flash(:info, info)
-     |> push_navigate(to: ~p"/users/log-in")}
-  end
+  #   {:noreply,
+  #    socket
+  #    |> put_flash(:info, info)
+  #    |> push_navigate(to: ~p"/users/log-in")}
+  # end
 
   defp local_mail_adapter? do
     Application.get_env(:wayfinder, Wayfinder.Mailer)[:adapter] == Swoosh.Adapters.Local

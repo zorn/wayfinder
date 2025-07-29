@@ -65,7 +65,7 @@ defmodule Wayfinder.Accounts do
   end
 
   @doc """
-  Creates a `Wayfinder.Accounts.User` entity.
+  Creates a `Wayfinder.Accounts.User` entity signifying a new user registration.
   """
   @spec create_user(create_user_attrs()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def create_user(attrs) do
@@ -75,64 +75,64 @@ defmodule Wayfinder.Accounts do
   end
 
   @doc """
-  Returns a changeset appropriate for creating a new user.
-
-  ## Options
-
-  * `:action` - An optional atom applied to the changeset's `:action` attribute. Useful for forms that
-    look to a changeset's action to influence form presentation.
+  Returns an `%Ecto.Changeset{}` appropriate for tracking attributes related to
+  creating a `Wayfinder.Accounts.User` entity.
   """
-  # FIXME: Update options typespec.
-  @spec create_user_changeset(
-          attrs :: create_user_attrs(),
-          opts :: Keyword.t()
-        ) :: Ecto.Changeset.t()
-  def create_user_changeset(attrs \\ %{}, opts \\ []) do
-    opts = Keyword.validate!(opts, action: nil)
-
-    changeset =
-      %User{}
-      |> cast(attrs, [:email, :password])
-      |> User.validate_email()
-      |> User.validate_password()
-
-    # DRY
-    if opts[:action] do
-      Map.put(changeset, :action, opts[:action])
-    else
-      changeset
-    end
+  @spec create_user_changeset(attrs :: create_user_attrs()) :: Ecto.Changeset.t()
+  def create_user_changeset(attrs \\ %{}) do
+    %User{}
+    |> cast(attrs, [:email, :password])
+    |> User.validate_email()
+    |> User.validate_password()
   end
 
   @doc """
-  Returns an `%Ecto.Changeset{}` for changing the user email.
-
-  ## Options
-
-  * `:action` - An optional atom applied to the changeset's `:action` attribute. Useful for forms that
-    look to a changeset's action to influence form presentation.
+  Deletes the given user session token.
   """
-  @spec update_user_email_changeset(
-          user :: User.t(),
-          attrs :: update_user_email_attrs()
-        ) :: User.changeset()
-  def update_user_email_changeset(%User{} = user, attrs \\ %{}, opts \\ []) do
-    opts = Keyword.validate!(opts, action: nil)
-
-    changeset =
-      user
-      |> cast(attrs, [:email, :password])
-      |> User.validate_email()
-
-    # DRY
-    if opts[:action] do
-      Map.put(changeset, :action, opts[:action])
-    else
-      changeset
-    end
+  @spec delete_user_session_token(token :: String.t()) :: :ok
+  def delete_user_session_token(token) when is_binary(token) do
+    Repo.delete_all(from(UserToken, where: [token: ^token, context: "session"]))
+    :ok
   end
 
-  ## ORDERED
+  @doc """
+  Delivers the update email instructions to the given user.
+  """
+  @spec deliver_user_update_email_instructions(
+          user :: User.t(),
+          current_email :: String.t(),
+          update_email_url_fun :: (String.t() -> String.t())
+        ) :: {:ok, Swoosh.Email.t()}
+  def deliver_user_update_email_instructions(%User{} = user, current_email, update_email_url_fun)
+      when is_function(update_email_url_fun, 1) do
+    {encoded_token, user_token} = UserToken.build_email_token(user, "change:#{current_email}")
+
+    Repo.insert!(user_token)
+
+    url = update_email_url_fun.(encoded_token)
+
+    # Going to match on an assumed success result, but ultimately we should
+    # change this to an Oban job.
+    {:ok, _email} = UserNotifier.deliver_update_email_instructions(user, url)
+  end
+
+  @doc """
+  Creates, persists, and returns a session token for the given `Wayfinder.Accounts.User` entity.
+  """
+  @spec generate_user_session_token(user :: User.t()) :: token :: String.t()
+  def generate_user_session_token(%User{} = user) do
+    {token, user_token} = UserToken.build_session_token(user)
+    Repo.insert!(user_token)
+    token
+  end
+
+  @doc """
+  Returns a `Wayfinder.Accounts.User` entity for the given identity.
+
+  Raises `Ecto.NoResultsError` if no entity exists.
+  """
+  @spec get_user!(id :: User.id()) :: User.t()
+  def get_user!(id), do: Repo.get!(User, id)
 
   @doc """
   Returns a `Wayfinder.Accounts.User` entity for the given email address.
@@ -157,35 +157,49 @@ defmodule Wayfinder.Accounts do
   end
 
   @doc """
-  Returns a `Wayfinder.Accounts.User` entity for the given identity.
+  Returns a `Wayfinder.Accounts.User` entity for the given session token.
 
-  Raises `Ecto.NoResultsError` if no entity exists.
+  If the token is valid `{user, token_inserted_at}` is returned, otherwise `nil` is returned.
   """
-  @spec get_user!(id :: User.id()) :: User.t()
-  def get_user!(id), do: Repo.get!(User, id)
+  @spec get_user_by_session_token(token :: String.t()) ::
+          {user :: User.t(), token_inserted_at :: DateTime.t()} | nil
+  def get_user_by_session_token(token) do
+    query =
+      from token in UserToken.by_token_and_context_query(token, "session"),
+        join: user in assoc(token, :user),
+        where: token.inserted_at > ago(14, "day"),
+        select: {%{user | authenticated_at: token.authenticated_at}, token.inserted_at}
 
-  ## Settings
-
-  @doc """
-  Checks whether the user is in sudo mode.
-
-  The user is in sudo mode when the last authentication was done no further
-  than 20 minutes ago. The limit can be given as second argument in minutes.
-  """
-  def sudo_mode?(user, minutes \\ -20)
-
-  def sudo_mode?(%User{authenticated_at: ts}, minutes) when is_struct(ts, DateTime) do
-    DateTime.after?(ts, DateTime.utc_now() |> DateTime.add(minutes, :minute))
+    Repo.one(query)
   end
 
-  def sudo_mode?(_user, _minutes), do: false
+  @doc """
+  Returns `true` when the user is considered recently authenticated.
+
+  Recently is defined by default as the last authentication was done no further
+  than 20 minutes ago.
+
+  The time limit in minutes can be given as second argument.
+  """
+  @spec recently_authenticated?(User.t(), minutes :: integer()) :: boolean()
+  def recently_authenticated?(user, minutes \\ -20)
+
+  def recently_authenticated?(%User{authenticated_at: authenticated_at}, minutes)
+      when is_struct(authenticated_at, DateTime) do
+    minutes_from_now = DateTime.utc_now() |> DateTime.add(minutes, :minute)
+    DateTime.after?(authenticated_at, minutes_from_now)
+  end
+
+  def recently_authenticated?(_user, _minutes), do: false
 
   @doc """
-  Updates the user email using the given token.
+  Updates a `Wayfinder.Accounts.User` entity's email using a change email token.
 
   If the token matches, the user email is updated and the token is deleted.
   """
-  def update_user_email(user, token) do
+  @spec update_user_email(user :: User.t(), token :: String.t()) ::
+          {:ok, User.t()} | {:error, :transaction_aborted}
+  def update_user_email(%User{} = user, token) do
     context = "change:#{user.email}"
 
     Repo.transact(fn ->
@@ -200,6 +214,22 @@ defmodule Wayfinder.Accounts do
       end
     end)
   end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` appropriate for tracking attributes related to
+  updating a `Wayfinder.Accounts.User` entity's email.
+  """
+  @spec update_user_email_changeset(
+          user :: User.t(),
+          attrs :: update_user_email_attrs()
+        ) :: User.changeset()
+  def update_user_email_changeset(%User{} = user, attrs \\ %{}) do
+    user
+    |> cast(attrs, [:email])
+    |> User.validate_email()
+  end
+
+  ## ORDERED
 
   @doc """
   Returns an `%Ecto.Changeset{}` for changing the user password.
@@ -234,68 +264,6 @@ defmodule Wayfinder.Accounts do
     user
     |> User.password_changeset(attrs)
     |> update_user_and_delete_all_tokens()
-  end
-
-  ## Session
-
-  @doc """
-  Generates a session token.
-  """
-  def generate_user_session_token(user) do
-    {token, user_token} = UserToken.build_session_token(user)
-    Repo.insert!(user_token)
-    token
-  end
-
-  @doc """
-  Gets the user with the given signed token.
-
-  If the token is valid `{user, token_inserted_at}` is returned, otherwise `nil` is returned.
-  """
-  def get_user_by_session_token(token) do
-    {:ok, query} = UserToken.verify_session_token_query(token)
-    Repo.one(query)
-  end
-
-  @doc """
-  Gets the user with the given magic link token.
-  """
-  def get_user_by_magic_link_token(token) do
-    with {:ok, query} <- UserToken.verify_magic_link_token_query(token),
-         {user, _token} <- Repo.one(query) do
-      user
-    else
-      _ -> nil
-    end
-  end
-
-  @doc ~S"""
-  Delivers the update email instructions to the given user.
-  """
-  def deliver_user_update_email_instructions(%User{} = user, current_email, update_email_url_fun)
-      when is_function(update_email_url_fun, 1) do
-    {encoded_token, user_token} = UserToken.build_email_token(user, "change:#{current_email}")
-
-    Repo.insert!(user_token)
-    UserNotifier.deliver_update_email_instructions(user, update_email_url_fun.(encoded_token))
-  end
-
-  @doc """
-  Delivers the magic link login instructions to the given user.
-  """
-  def deliver_login_instructions(%User{} = user, magic_link_url_fun)
-      when is_function(magic_link_url_fun, 1) do
-    {encoded_token, user_token} = UserToken.build_email_token(user, "login")
-    Repo.insert!(user_token)
-    UserNotifier.deliver_login_instructions(user, magic_link_url_fun.(encoded_token))
-  end
-
-  @doc """
-  Deletes the signed token with the given context.
-  """
-  def delete_user_session_token(token) do
-    Repo.delete_all(from(UserToken, where: [token: ^token, context: "session"]))
-    :ok
   end
 
   defp update_user_and_delete_all_tokens(changeset) do

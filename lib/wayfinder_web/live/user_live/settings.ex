@@ -80,7 +80,7 @@ defmodule WayfinderWeb.UserLive.Settings do
 
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
-    email_changeset = Accounts.update_user_email_changeset(user, %{}, validate_unique: false)
+    email_changeset = Accounts.update_user_email_changeset(user, %{})
     password_changeset = Accounts.update_user_password_changeset(user, %{})
 
     socket =
@@ -98,7 +98,7 @@ defmodule WayfinderWeb.UserLive.Settings do
 
     email_form =
       socket.assigns.current_scope.user
-      |> Accounts.update_user_email_changeset(user_params, validate_unique: false)
+      |> Accounts.update_user_email_changeset(user_params)
       |> Map.put(:action, :validate)
       |> to_form()
 
@@ -108,7 +108,7 @@ defmodule WayfinderWeb.UserLive.Settings do
   def handle_event("update_email", params, socket) do
     %{"user" => user_params} = params
     user = socket.assigns.current_scope.user
-    true = Accounts.sudo_mode?(user)
+    true = Accounts.recently_authenticated?(user)
 
     case Accounts.update_user_email_changeset(user, user_params) do
       %{valid?: true} = changeset ->
@@ -141,7 +141,7 @@ defmodule WayfinderWeb.UserLive.Settings do
   def handle_event("update_password", params, socket) do
     %{"user" => user_params} = params
     user = socket.assigns.current_scope.user
-    true = Accounts.sudo_mode?(user)
+    true = Accounts.recently_authenticated?(user)
 
     case Accounts.update_user_password_changeset(user, user_params) do
       %{valid?: true} = changeset ->

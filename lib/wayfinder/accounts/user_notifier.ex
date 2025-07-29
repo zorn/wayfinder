@@ -1,10 +1,15 @@
 defmodule Wayfinder.Accounts.UserNotifier do
   import Swoosh.Email
 
-  alias Wayfinder.Mailer
   alias Wayfinder.Accounts.User
+  alias Wayfinder.Mailer
 
   # Delivers the email using the application mailer.
+  @spec deliver(
+          recipient :: String.t(),
+          subject :: String.t(),
+          body :: String.t()
+        ) :: {:ok, Swoosh.Email.t()} | {:error, any()}
   defp deliver(recipient, subject, body) do
     email =
       new()
@@ -21,6 +26,10 @@ defmodule Wayfinder.Accounts.UserNotifier do
   @doc """
   Deliver instructions to update a user email.
   """
+  @spec deliver_update_email_instructions(
+          user :: User.t(),
+          url :: String.t()
+        ) :: {:ok, Swoosh.Email.t()} | {:error, any()}
   def deliver_update_email_instructions(user, url) do
     deliver(user.email, "Update email instructions", """
 
@@ -39,33 +48,13 @@ defmodule Wayfinder.Accounts.UserNotifier do
   end
 
   @doc """
-  Deliver instructions to log in with a magic link.
+  Deliver instructions to confirm a user account.
   """
-  def deliver_login_instructions(user, url) do
-    case user do
-      %User{confirmed_at: nil} -> deliver_confirmation_instructions(user, url)
-      _ -> deliver_magic_link_instructions(user, url)
-    end
-  end
-
-  defp deliver_magic_link_instructions(user, url) do
-    deliver(user.email, "Log in instructions", """
-
-    ==============================
-
-    Hi #{user.email},
-
-    You can log into your account by visiting the URL below:
-
-    #{url}
-
-    If you didn't request this email, please ignore this.
-
-    ==============================
-    """)
-  end
-
-  defp deliver_confirmation_instructions(user, url) do
+  @spec deliver_confirmation_instructions(
+          user :: User.t(),
+          url :: String.t()
+        ) :: {:ok, Swoosh.Email.t()} | {:error, any()}
+  def deliver_confirmation_instructions(user, url) do
     deliver(user.email, "Confirmation instructions", """
 
     ==============================
