@@ -80,8 +80,8 @@ defmodule WayfinderWeb.UserLive.Settings do
 
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
-    email_changeset = Accounts.change_user_email(user, %{}, validate_unique: false)
-    password_changeset = Accounts.change_user_password(user, %{}, hash_password: false)
+    email_changeset = Accounts.update_user_email_changeset(user, %{}, validate_unique: false)
+    password_changeset = Accounts.update_user_password_changeset(user, %{})
 
     socket =
       socket
@@ -98,7 +98,7 @@ defmodule WayfinderWeb.UserLive.Settings do
 
     email_form =
       socket.assigns.current_scope.user
-      |> Accounts.change_user_email(user_params, validate_unique: false)
+      |> Accounts.update_user_email_changeset(user_params, validate_unique: false)
       |> Map.put(:action, :validate)
       |> to_form()
 
@@ -110,7 +110,7 @@ defmodule WayfinderWeb.UserLive.Settings do
     user = socket.assigns.current_scope.user
     true = Accounts.sudo_mode?(user)
 
-    case Accounts.change_user_email(user, user_params) do
+    case Accounts.update_user_email_changeset(user, user_params) do
       %{valid?: true} = changeset ->
         Accounts.deliver_user_update_email_instructions(
           Ecto.Changeset.apply_action!(changeset, :insert),
@@ -131,7 +131,7 @@ defmodule WayfinderWeb.UserLive.Settings do
 
     password_form =
       socket.assigns.current_scope.user
-      |> Accounts.change_user_password(user_params, hash_password: false)
+      |> Accounts.update_user_password_changeset(user_params)
       |> Map.put(:action, :validate)
       |> to_form()
 
@@ -143,7 +143,7 @@ defmodule WayfinderWeb.UserLive.Settings do
     user = socket.assigns.current_scope.user
     true = Accounts.sudo_mode?(user)
 
-    case Accounts.change_user_password(user, user_params) do
+    case Accounts.update_user_password_changeset(user, user_params) do
       %{valid?: true} = changeset ->
         {:noreply, assign(socket, trigger_submit: true, password_form: to_form(changeset))}
 
