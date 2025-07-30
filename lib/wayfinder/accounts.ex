@@ -1,10 +1,11 @@
 defmodule Wayfinder.Accounts do
   @moduledoc """
-  Provides functions related to user accounts, including user registration, user profile editing, authentication, and session management.
+  Provides functions related to user accounts, including user registration, user
+  profile editing, authentication, and session management.
   """
 
-  import Ecto.Query
   import Ecto.Changeset
+  import Ecto.Query
 
   alias Wayfinder.Accounts.User
   alias Wayfinder.Accounts.UserNotifier
@@ -12,7 +13,7 @@ defmodule Wayfinder.Accounts do
   alias Wayfinder.Repo
 
   @typedoc """
-  A map value shape related to the attributes used when creating a
+  A map value related to the attributes used when creating a
   `Wayfinder.Accounts.User` entity via the `create_user/1` function.
   """
   @type create_user_attrs :: %{
@@ -22,11 +23,20 @@ defmodule Wayfinder.Accounts do
         }
 
   @typedoc """
-  A map value shape related to the attributes used when updating a
+  A map value related to the attributes used when updating a
   `Wayfinder.Accounts.User` entity via the `update_user_email/2` function.
   """
   @type update_user_email_attrs :: %{
           optional(:email) => String.t()
+        }
+
+  @typedoc """
+  A map value related to the attributes used when updating a
+  `Wayfinder.Accounts.User` entity via the `update_user_password/2` function.
+  """
+  @type update_user_password_attrs :: %{
+          optional(:password) => String.t(),
+          optional(:password_confirmation) => String.t()
         }
 
   @doc """
@@ -205,7 +215,7 @@ defmodule Wayfinder.Accounts do
     Repo.transact(fn ->
       with {:ok, query} <- UserToken.verify_change_email_token_query(token, context),
            %UserToken{sent_to: email} <- Repo.one(query),
-           {:ok, user} <- Repo.update(User.email_changeset(user, %{email: email})),
+           {:ok, user} <- Repo.update(update_user_email_changeset(user, %{email: email})),
            {_count, _result} <-
              Repo.delete_all(from(UserToken, where: [user_id: ^user.id, context: ^context])) do
         {:ok, user}
@@ -229,56 +239,44 @@ defmodule Wayfinder.Accounts do
     |> User.validate_email()
   end
 
-  ## ORDERED
-
   @doc """
-  Returns an `%Ecto.Changeset{}` for changing the user password.
-
-  ## Options
-
-  * `:action` - An optional atom applied to the changeset's `:action` attribute. Useful for forms that
-    look to a changeset's action to influence form presentation.
-  """
-  def update_user_password_changeset(%User{} = user, attrs \\ %{}, opts \\ []) do
-    opts = Keyword.validate!(opts, action: nil)
-
-    changeset =
-      user
-      |> cast(attrs, [:password])
-      |> User.validate_password()
-
-    # DRY
-    if opts[:action] do
-      Map.put(changeset, :action, opts[:action])
-    else
-      changeset
-    end
-  end
-
-  @doc """
-  Updates the user password.
+  Updates a `Wayfinder.Accounts.User` entity's password.
 
   Returns a tuple with the updated user, as well as a list of expired tokens.
   """
+  @spec update_user_password(
+          user :: User.t(),
+          attrs :: update_user_password_attrs()
+        ) :: {:ok, {user :: User.t(), deleted_tokens :: [UserToken.t()]}} | {:error, any()}
   def update_user_password(user, attrs) do
-    user
-    |> User.password_changeset(attrs)
-    |> update_user_and_delete_all_tokens()
-  end
+    changeset = update_user_password_changeset(user, attrs)
 
-  defp update_user_and_delete_all_tokens(changeset) do
     Repo.transact(fn ->
       with {:ok, user} <- Repo.update(changeset) do
-        tokens_to_expire = Repo.all_by(UserToken, user_id: user.id)
+        tokens_to_delete = Repo.all_by(UserToken, user_id: user.id)
 
-        Repo.delete_all(from(t in UserToken, where: t.id in ^Enum.map(tokens_to_expire, & &1.id)))
+        Repo.delete_all(from(t in UserToken, where: t.id in ^Enum.map(tokens_to_delete, & &1.id)))
 
-        {:ok, {user, tokens_to_expire}}
+        # By this point these are really `deleted_tokens`.
+        # FIXME: It might be more correct to base this on the return value of the `delete_all`.
+        {:ok, {user, tokens_to_delete}}
       end
     end)
   end
 
-  # TODO: Maybe move this to a helper?
+  @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user password.
+  """
+  @spec update_user_password_changeset(
+          user :: User.t(),
+          attrs :: update_user_password_attrs()
+        ) :: User.changeset()
+  def update_user_password_changeset(%User{} = user, attrs \\ %{}) do
+    user
+    |> cast(attrs, [:password])
+    |> User.validate_password()
+  end
+
   defp get_map_value(map, key) do
     map[key] || map[Atom.to_string(key)]
   end

@@ -1,4 +1,8 @@
 defmodule Wayfinder.Accounts.User do
+  @moduledoc """
+  TODO
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -37,17 +41,6 @@ defmodule Wayfinder.Accounts.User do
     timestamps(type: :utc_datetime_usec)
   end
 
-  @doc """
-  A user changeset for registering or changing the email.
-
-  It requires the email to change otherwise an error is added.
-  """
-  def email_changeset(user, attrs) do
-    user
-    |> cast(attrs, [:email])
-    |> validate_email()
-  end
-
   def validate_email(%Ecto.Changeset{} = changeset) do
     changeset
     |> validate_required([:email])
@@ -62,22 +55,13 @@ defmodule Wayfinder.Accounts.User do
     |> unique_constraint(:email)
   end
 
-  @doc """
-  A user changeset for changing the password.
-  """
-  def password_changeset(user, attrs) do
-    user
-    |> cast(attrs, [:password])
-    |> validate_confirmation(:password, message: "does not match password")
-    |> validate_password()
-  end
-
   def validate_password(%Ecto.Changeset{} = changeset) do
     changeset
     |> validate_required([:password])
     # It is important to validate the length of the password, as long passwords
     # may be very expensive to hash for certain algorithms.
     |> validate_length(:password, min: 12, max: 72)
+    |> validate_confirmation(:password, message: "does not match password")
     |> maybe_hash_password()
   end
 

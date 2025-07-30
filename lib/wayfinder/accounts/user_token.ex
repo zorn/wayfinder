@@ -1,7 +1,12 @@
 defmodule Wayfinder.Accounts.UserToken do
   use Ecto.Schema
+
   import Ecto.Query
+
   alias Wayfinder.Accounts.UserToken
+
+  # FIXME: fill this out
+  @type t() :: %__MODULE__{}
 
   @hash_algorithm :sha256
   @rand_size 32
