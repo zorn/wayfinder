@@ -1,5 +1,15 @@
 # Command Line History
 
+## July 21, 2025
+
+<https://hexdocs.pm/phoenix/mix_phx_gen_auth.html>
+
+We prefer `argon2` for our hashing.
+
+```bash
+mix phx.gen.auth Accounts User users --binary-id --hashing-lib argon2
+```
+
 ## July 20, 2025
 
 Doing a update of the project from Phoenix `v1.8.0-rc.3` to `v1.8.0-rc.4`.

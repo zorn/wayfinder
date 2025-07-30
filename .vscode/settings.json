@@ -9,6 +9,8 @@
         "isready",
         "loadpaths",
         "MAILGUN",
+        "moduledoc",
+        "Oban",
         "oklch",
         "plts",
         "prefersdark",
