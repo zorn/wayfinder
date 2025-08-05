@@ -8,7 +8,7 @@ defmodule Wayfinder.Repo.Migrations.CreateUsersAuthTables do
       add :id, :binary_id, primary_key: true
       add :email, :citext, null: false
       add :hashed_password, :string
-      add :confirmed_at, :utc_datetime
+      add :confirmed_at, :utc_datetime_usec
 
       timestamps(type: :utc_datetime_usec)
     end
