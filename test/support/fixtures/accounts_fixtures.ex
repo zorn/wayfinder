@@ -46,8 +46,13 @@ defmodule Wayfinder.AccountsFixtures do
   end
 
   def set_password(user) do
+    new_password = valid_user_password()
+
     {:ok, {user, _expired_tokens}} =
-      Accounts.update_user_password(user, %{password: valid_user_password()})
+      Accounts.update_user_password(user, %{
+        password: new_password,
+        password_confirmation: new_password
+      })
 
     user
   end

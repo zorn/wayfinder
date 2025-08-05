@@ -163,7 +163,7 @@ defmodule Wayfinder.Accounts do
   def get_user_by_email_and_password(email, password)
       when is_binary(email) and is_binary(password) do
     user = Repo.get_by(User, email: email)
-    if User.valid_password?(user, password), do: user
+    if valid_password?(user, password), do: user
   end
 
   @doc """
@@ -215,7 +215,11 @@ defmodule Wayfinder.Accounts do
     Repo.transact(fn ->
       with {:ok, query} <- UserToken.verify_change_email_token_query(token, context),
            %UserToken{sent_to: email} <- Repo.one(query),
-           {:ok, user} <- Repo.update(update_user_email_changeset(user, %{email: email})),
+           changeset <- update_user_email_changeset(user, %{email: email}),
+           # Manually add a `confirmed_at` value since this token is coming in
+           # from their mailbox.
+           changeset <- put_change(changeset, :confirmed_at, DateTime.utc_now()),
+           {:ok, user} <- Repo.update(changeset),
            {_count, _result} <-
              Repo.delete_all(from(UserToken, where: [user_id: ^user.id, context: ^context])) do
         {:ok, user}
@@ -275,6 +279,18 @@ defmodule Wayfinder.Accounts do
     user
     |> cast(attrs, [:password])
     |> User.validate_password()
+  end
+
+  defp valid_password?(%User{hashed_password: hashed_password}, password)
+       when is_binary(hashed_password) and byte_size(password) > 0 do
+    Argon2.verify_pass(password, hashed_password)
+  end
+
+  defp valid_password?(_, _) do
+    # If there is no user or the user doesn't have a password, we call
+    # `Argon2.no_user_verify/0` to avoid timing attacks.
+    Argon2.no_user_verify()
+    false
   end
 
   defp get_map_value(map, key) do

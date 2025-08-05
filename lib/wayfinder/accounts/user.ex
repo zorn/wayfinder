@@ -61,7 +61,7 @@ defmodule Wayfinder.Accounts.User do
     # It is important to validate the length of the password, as long passwords
     # may be very expensive to hash for certain algorithms.
     |> validate_length(:password, min: 12, max: 72)
-    |> validate_confirmation(:password, message: "does not match password")
+    |> validate_confirmation(:password, message: "does not match password", required: true)
     |> maybe_hash_password()
   end
 
@@ -79,30 +79,5 @@ defmodule Wayfinder.Accounts.User do
     else
       changeset
     end
-  end
-
-  @doc """
-  Confirms the account by setting `confirmed_at`.
-  """
-  def confirm_changeset(user) do
-    now = DateTime.utc_now(:second)
-    change(user, confirmed_at: now)
-  end
-
-  # TODO: Move this out of the schema file?
-  @doc """
-  Verifies the password.
-
-  If there is no user or the user doesn't have a password, we call
-  `Argon2.no_user_verify/0` to avoid timing attacks.
-  """
-  def valid_password?(%Wayfinder.Accounts.User{hashed_password: hashed_password}, password)
-      when is_binary(hashed_password) and byte_size(password) > 0 do
-    Argon2.verify_pass(password, hashed_password)
-  end
-
-  def valid_password?(_, _) do
-    Argon2.no_user_verify()
-    false
   end
 end
