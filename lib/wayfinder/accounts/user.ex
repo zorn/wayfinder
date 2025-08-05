@@ -43,6 +43,7 @@ defmodule Wayfinder.Accounts.User do
 
   def validate_email(%Ecto.Changeset{} = changeset) do
     changeset
+    |> validate_email_changed()
     |> validate_required([:email])
     # FIXME: This currently allows values like `1@2` which doesn't seem valid.
     # Update this when I'm cleaning up the tests.
@@ -53,6 +54,14 @@ defmodule Wayfinder.Accounts.User do
     |> validate_length(:email, max: 160)
     |> unsafe_validate_unique(:email, Wayfinder.Repo)
     |> unique_constraint(:email)
+  end
+
+  defp validate_email_changed(changeset) do
+    if get_field(changeset, :email) && get_change(changeset, :email) == nil do
+      add_error(changeset, :email, "did not change")
+    else
+      changeset
+    end
   end
 
   def validate_password(%Ecto.Changeset{} = changeset) do
