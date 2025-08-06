@@ -13,6 +13,12 @@ defmodule Wayfinder.MixProject do
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
       listeners: [Phoenix.CodeReloader],
 
+      # Allow the `mix check` (which will run `dialyzer` under a `:test`
+      # `MIX_ENV` to see `ex_unit` modules.)
+      dialyzer: [
+        plt_add_apps: [:ex_unit]
+      ],
+
       # Docs
       name: "Wayfinder",
       source_url: "https://github.com/zorn/wayfinder",
