@@ -66,7 +66,7 @@ defmodule Wayfinder.AccountsFixtures do
     user
   end
 
-  @spec extract_user_token(fun :: fun() :: {:ok, Swoosh.Email.t()}) :: String.t()
+  @spec extract_user_token(fun()) :: String.t()
   def extract_user_token(fun) do
     {:ok, captured_email} = fun.(&"[TOKEN]#{&1}[TOKEN]")
     [_, token | _] = String.split(captured_email.text_body, "[TOKEN]")
