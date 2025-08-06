@@ -62,7 +62,11 @@ defmodule WayfinderWeb.ConnCase do
 
   It returns an updated `conn`.
   """
-  @spec log_in_user(Plug.Conn.t(), User.t(), opts :: Keyword.t()) :: Plug.Conn.t()
+  @spec log_in_user(
+          Plug.Conn.t(),
+          Wayfinder.Accounts.User.t(),
+          opts :: Keyword.t()
+        ) :: Plug.Conn.t()
   def log_in_user(conn, user, opts \\ []) do
     token = Wayfinder.Accounts.generate_user_session_token(user)
 
