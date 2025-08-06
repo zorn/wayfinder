@@ -1,6 +1,8 @@
 defmodule WayfinderWeb.Router do
   use WayfinderWeb, :router
 
+  import WayfinderWeb.UserAuth
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -13,6 +15,8 @@ defmodule WayfinderWeb.Router do
     plug :put_secure_browser_headers, %{
       "content-security-policy" => "default-src 'self'; img-src 'self' data:"
     }
+
+    plug :fetch_current_scope_for_user
   end
 
   pipeline :api do
@@ -45,5 +49,34 @@ defmodule WayfinderWeb.Router do
       live_dashboard "/dashboard", metrics: WayfinderWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
+  end
+
+  ## Authentication routes
+
+  scope "/", WayfinderWeb do
+    pipe_through [:browser, :require_recently_authenticated]
+
+    live_session :require_recently_authenticated,
+      on_mount: [{WayfinderWeb.UserAuth, :require_authenticated}] do
+      live "/users/settings", UserLive.Settings, :edit
+      live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
+    end
+
+    post "/users/update-password", UserSessionController, :update_password
+  end
+
+  scope "/", WayfinderWeb do
+    pipe_through [:browser]
+
+    live_session :current_user,
+      on_mount: [{WayfinderWeb.UserAuth, :mount_current_scope}] do
+      live "/users/log-in", UserLive.Login, :new
+    end
+
+    get "/users/register", UserRegistrationController, :new
+    post "/users/register", UserRegistrationController, :create
+
+    post "/users/log-in", UserSessionController, :create
+    delete "/users/log-out", UserSessionController, :delete
   end
 end
