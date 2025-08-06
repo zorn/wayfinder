@@ -1,12 +1,11 @@
 defmodule WayfinderWeb.UserAuthTest do
   use WayfinderWeb.ConnCase, async: true
+  import Wayfinder.AccountsFixtures
 
   alias Phoenix.LiveView
   alias Wayfinder.Accounts
   alias Wayfinder.Accounts.Scope
   alias WayfinderWeb.UserAuth
-
-  import Wayfinder.AccountsFixtures
 
   @remember_me_cookie "_wayfinder_web_user_remember_me"
   @remember_me_cookie_max_age 60 * 60 * 24 * 14
@@ -316,13 +315,13 @@ defmodule WayfinderWeb.UserAuthTest do
     end
   end
 
-  describe "require_authenticated_user/2" do
+  describe "require_recently_authenticated/2" do
     setup %{conn: conn} do
       %{conn: UserAuth.fetch_current_scope_for_user(conn, [])}
     end
 
     test "redirects if user is not authenticated", %{conn: conn} do
-      conn = conn |> fetch_flash() |> UserAuth.require_authenticated_user([])
+      conn = conn |> fetch_flash() |> UserAuth.require_recently_authenticated([])
       assert conn.halted
 
       assert redirected_to(conn) == ~p"/users/log-in"
@@ -335,7 +334,7 @@ defmodule WayfinderWeb.UserAuthTest do
       halted_conn =
         %{conn | path_info: ["foo"], query_string: ""}
         |> fetch_flash()
-        |> UserAuth.require_authenticated_user([])
+        |> UserAuth.require_recently_authenticated([])
 
       assert halted_conn.halted
       assert get_session(halted_conn, :user_return_to) == "/foo"
@@ -343,7 +342,7 @@ defmodule WayfinderWeb.UserAuthTest do
       halted_conn =
         %{conn | path_info: ["foo"], query_string: "bar=baz"}
         |> fetch_flash()
-        |> UserAuth.require_authenticated_user([])
+        |> UserAuth.require_recently_authenticated([])
 
       assert halted_conn.halted
       assert get_session(halted_conn, :user_return_to) == "/foo?bar=baz"
@@ -351,7 +350,7 @@ defmodule WayfinderWeb.UserAuthTest do
       halted_conn =
         %{conn | path_info: ["foo"], query_string: "bar", method: "POST"}
         |> fetch_flash()
-        |> UserAuth.require_authenticated_user([])
+        |> UserAuth.require_recently_authenticated([])
 
       assert halted_conn.halted
       refute get_session(halted_conn, :user_return_to)
@@ -361,7 +360,7 @@ defmodule WayfinderWeb.UserAuthTest do
       conn =
         conn
         |> assign(:current_scope, Scope.for_user(user))
-        |> UserAuth.require_authenticated_user([])
+        |> UserAuth.require_recently_authenticated([])
 
       refute conn.halted
       refute conn.status

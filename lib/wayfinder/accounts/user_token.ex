@@ -1,12 +1,41 @@
 defmodule Wayfinder.Accounts.UserToken do
+  @moduledoc """
+  A entity that stores a token value related to an account action to be acted
+  upon later, usually via an emailed link or a signed session cookie.
+  """
+
   use Ecto.Schema
 
   import Ecto.Query
 
+  alias Wayfinder.Accounts.User
   alias Wayfinder.Accounts.UserToken
 
-  # FIXME: fill this out
-  @type t() :: %__MODULE__{}
+  @typedoc """
+  A repo-sourced `Wayfinder.Accounts.UserToken` entity.
+  """
+  @type t() :: %__MODULE__{
+          id: id(),
+          token: String.t(),
+          context: String.t(),
+          sent_to: String.t() | nil,
+          authenticated_at: DateTime.t() | nil,
+          user_id: Wayfinder.Accounts.User.id(),
+          inserted_at: DateTime.t()
+        }
+
+  @typedoc """
+  A simple struct type of a `Wayfinder.Accounts.UserToken` entity.
+
+  This type is sometimes needed when want to compose a function typespec that
+  will return a non-repo sourced struct value.
+  """
+  @type schema_t() :: %__MODULE__{}
+
+  @typedoc """
+  The identity value type of a `Wayfinder.Accounts.UserToken` entity.
+  """
+  @type id() :: Ecto.UUID.t()
 
   @hash_algorithm :sha256
   @rand_size 32
@@ -44,6 +73,7 @@ defmodule Wayfinder.Accounts.UserToken do
   and devices in the UI and allow users to explicitly expire any
   session they deem invalid.
   """
+  @spec build_session_token(User.t()) :: {token :: String.t(), user_token :: schema_t()}
   def build_session_token(user) do
     token = :crypto.strong_rand_bytes(@rand_size)
     dt = user.authenticated_at || DateTime.utc_now(:second)
@@ -63,10 +93,14 @@ defmodule Wayfinder.Accounts.UserToken do
   Users can easily adapt the existing code to provide other types of delivery methods,
   for example, by phone numbers.
   """
+  @spec build_email_token(User.t(), context :: String.t()) ::
+          {encoded_token :: String.t(), user_token :: schema_t()}
   def build_email_token(user, context) do
     build_hashed_token(user, context, user.email)
   end
 
+  @spec build_hashed_token(User.t(), context :: String.t(), sent_to :: String.t()) ::
+          {encoded_token :: String.t(), user_token :: schema_t()}
   defp build_hashed_token(user, context, sent_to) do
     token = :crypto.strong_rand_bytes(@rand_size)
     hashed_token = :crypto.hash(@hash_algorithm, token)
@@ -91,6 +125,8 @@ defmodule Wayfinder.Accounts.UserToken do
   database and if it has not expired (after @change_email_validity_in_days).
   The context must always start with "change:".
   """
+  @spec verify_change_email_token_query(token :: String.t(), context :: String.t()) ::
+          {:ok, Ecto.Query.t()} | :error
   def verify_change_email_token_query(token, "change:" <> _ = context) do
     case Base.url_decode64(token, padding: false) do
       {:ok, decoded_token} ->
@@ -107,6 +143,8 @@ defmodule Wayfinder.Accounts.UserToken do
     end
   end
 
+  @spec by_token_and_context_query(token :: String.t(), context :: String.t()) ::
+          Ecto.Query.t()
   def by_token_and_context_query(token, context) do
     from UserToken, where: [token: ^token, context: ^context]
   end

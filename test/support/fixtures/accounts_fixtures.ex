@@ -9,9 +9,13 @@ defmodule Wayfinder.AccountsFixtures do
   alias Wayfinder.Accounts
   alias Wayfinder.Accounts.Scope
 
+  @spec unique_user_email() :: String.t()
   def unique_user_email, do: "user#{System.unique_integer()}@example.com"
+
+  @spec valid_user_password() :: String.t()
   def valid_user_password, do: "hello world!"
 
+  @spec valid_user_attributes(attrs :: map()) :: map()
   def valid_user_attributes(attrs \\ %{}) do
     Enum.into(attrs, %{
       email: unique_user_email(),
@@ -20,6 +24,7 @@ defmodule Wayfinder.AccountsFixtures do
     })
   end
 
+  @spec unconfirmed_user_fixture(attrs :: map()) :: User.t()
   def unconfirmed_user_fixture(attrs \\ %{}) do
     {:ok, user} =
       attrs
@@ -32,19 +37,23 @@ defmodule Wayfinder.AccountsFixtures do
 
   # FIXME: Feels odd for the fixture to have named fixtures for `unconfirmed`
   # and then this -- with no changes. Should clean up.
+  @spec user_fixture(attrs :: map()) :: User.t()
   def user_fixture(attrs \\ %{}) do
     unconfirmed_user_fixture(attrs)
   end
 
+  @spec user_scope_fixture() :: Scope.t()
   def user_scope_fixture do
     user = user_fixture()
     user_scope_fixture(user)
   end
 
+  @spec user_scope_fixture(User.t()) :: Scope.t()
   def user_scope_fixture(user) do
     Scope.for_user(user)
   end
 
+  @spec set_password(User.t()) :: User.t()
   def set_password(user) do
     new_password = valid_user_password()
 
@@ -57,12 +66,17 @@ defmodule Wayfinder.AccountsFixtures do
     user
   end
 
+  @spec extract_user_token(fun :: fun() :: {:ok, Swoosh.Email.t()}) :: String.t()
   def extract_user_token(fun) do
     {:ok, captured_email} = fun.(&"[TOKEN]#{&1}[TOKEN]")
     [_, token | _] = String.split(captured_email.text_body, "[TOKEN]")
     token
   end
 
+  @spec override_token_authenticated_at(
+          token :: String.t(),
+          authenticated_at :: DateTime.t()
+        ) :: :ok
   def override_token_authenticated_at(token, authenticated_at) when is_binary(token) do
     Wayfinder.Repo.update_all(
       from(t in Accounts.UserToken,
@@ -72,12 +86,19 @@ defmodule Wayfinder.AccountsFixtures do
     )
   end
 
+  @spec generate_user_magic_link_token(User.t()) ::
+          {encoded_token :: String.t(), token :: String.t()}
   def generate_user_magic_link_token(user) do
     {encoded_token, user_token} = Accounts.UserToken.build_email_token(user, "login")
     Wayfinder.Repo.insert!(user_token)
     {encoded_token, user_token.token}
   end
 
+  @spec offset_user_token(
+          token :: String.t(),
+          amount_to_add :: integer(),
+          unit :: :second | :minute | :hour | :day
+        ) :: :ok
   def offset_user_token(token, amount_to_add, unit) do
     dt = DateTime.add(DateTime.utc_now(:second), amount_to_add, unit)
 

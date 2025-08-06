@@ -1,6 +1,6 @@
 defmodule Wayfinder.Accounts.User do
   @moduledoc """
-  TODO
+  An entity representing a registered user account.
   """
 
   use Ecto.Schema
@@ -41,6 +41,8 @@ defmodule Wayfinder.Accounts.User do
     timestamps(type: :utc_datetime_usec)
   end
 
+  @doc false
+  @spec validate_email(Ecto.Changeset.t()) :: Ecto.Changeset.t()
   def validate_email(%Ecto.Changeset{} = changeset) do
     changeset
     |> validate_email_changed()
@@ -64,6 +66,8 @@ defmodule Wayfinder.Accounts.User do
     end
   end
 
+  @doc false
+  @spec validate_password(Ecto.Changeset.t()) :: Ecto.Changeset.t()
   def validate_password(%Ecto.Changeset{} = changeset) do
     changeset
     |> validate_required([:password])

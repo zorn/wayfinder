@@ -1,6 +1,23 @@
 defmodule WayfinderWeb.UserLive.Login do
   use WayfinderWeb, :live_view
 
+  @impl Phoenix.LiveView
+  def mount(_params, _session, socket) do
+    email =
+      Phoenix.Flash.get(socket.assigns.flash, :email) ||
+        get_in(socket.assigns, [:current_scope, Access.key(:user), Access.key(:email)])
+
+    form = to_form(%{"email" => email}, as: "user")
+
+    {:ok, assign(socket, form: form, trigger_submit: false)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("submit_password", _params, socket) do
+    {:noreply, assign(socket, :trigger_submit, true)}
+  end
+
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
@@ -52,19 +69,5 @@ defmodule WayfinderWeb.UserLive.Login do
       </div>
     </Layouts.app>
     """
-  end
-
-  def mount(_params, _session, socket) do
-    email =
-      Phoenix.Flash.get(socket.assigns.flash, :email) ||
-        get_in(socket.assigns, [:current_scope, Access.key(:user), Access.key(:email)])
-
-    form = to_form(%{"email" => email}, as: "user")
-
-    {:ok, assign(socket, form: form, trigger_submit: false)}
-  end
-
-  def handle_event("submit_password", _params, socket) do
-    {:noreply, assign(socket, :trigger_submit, true)}
   end
 end

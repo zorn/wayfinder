@@ -1,9 +1,10 @@
 defmodule WayfinderWeb.UserLive.SettingsTest do
   use WayfinderWeb.ConnCase, async: true
 
-  alias Wayfinder.Accounts
   import Phoenix.LiveViewTest
   import Wayfinder.AccountsFixtures
+
+  alias Wayfinder.Accounts
 
   describe "Settings page" do
     test "renders settings page", %{conn: conn} do

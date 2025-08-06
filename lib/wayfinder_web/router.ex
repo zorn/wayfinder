@@ -54,9 +54,9 @@ defmodule WayfinderWeb.Router do
   ## Authentication routes
 
   scope "/", WayfinderWeb do
-    pipe_through [:browser, :require_authenticated_user]
+    pipe_through [:browser, :require_recently_authenticated]
 
-    live_session :require_authenticated_user,
+    live_session :require_recently_authenticated,
       on_mount: [{WayfinderWeb.UserAuth, :require_authenticated}] do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
