@@ -2,10 +2,12 @@ defmodule WayfinderWeb.UserRegistrationController do
   use WayfinderWeb, :controller
 
   alias Wayfinder.Accounts
+  alias Wayfinder.Accounts.User
   alias WayfinderWeb.UserAuth
 
   @spec new(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def new(%{assigns: %{current_scope: %{user: user}}} = conn, _params) when not is_nil(user) do
+  def new(%{assigns: %{current_scope: %{user: user}}} = conn, _params)
+      when is_struct(user, User) do
     conn
     |> put_flash(:error, "You can not register a new account while logged in.")
     |> redirect(to: WayfinderWeb.UserAuth.signed_in_path(conn))
