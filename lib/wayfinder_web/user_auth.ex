@@ -275,7 +275,7 @@ defmodule WayfinderWeb.UserAuth do
 
   @doc "Returns the path to redirect to after log in."
   @spec signed_in_path(Plug.Conn.t()) :: String.t()
-  def signed_in_path(%Plug.Conn{assigns: %{current_scope: %Scope{user: %Accounts.User{}}}}) do
+  def signed_in_path(%Plug.Conn{assigns: %{current_scope: %Scope{user: %User{}}}}) do
     # The user was already logged in, redirect to settings.
     ~p"/users/settings"
   end
