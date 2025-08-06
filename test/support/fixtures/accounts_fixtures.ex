@@ -8,6 +8,7 @@ defmodule Wayfinder.AccountsFixtures do
 
   alias Wayfinder.Accounts
   alias Wayfinder.Accounts.Scope
+  alias Wayfinder.Accounts.User
 
   @spec unique_user_email() :: String.t()
   def unique_user_email, do: "user#{System.unique_integer()}@example.com"
