@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.ModuleDependencies
 defmodule WayfinderWeb.UserAuth do
   @moduledoc """
   Provides authentication and authorization functions.
