@@ -4,6 +4,7 @@ defmodule Wayfinder.Accounts.User do
   """
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
   @typedoc """
@@ -39,6 +40,40 @@ defmodule Wayfinder.Accounts.User do
     field :authenticated_at, :utc_datetime, virtual: true
 
     timestamps(type: :utc_datetime_usec)
+  end
+
+  @doc """
+  Returns an `Ecto.Changeset` appropriate for creating a
+  `Wayfinder.Accounts.User` entity.
+  """
+  @spec create_changeset(attrs :: map()) :: Ecto.Changeset.t()
+  def create_changeset(attrs \\ %{}) do
+    %__MODULE__{}
+    |> cast(attrs, [:email, :password])
+    |> validate_email()
+    |> validate_password()
+  end
+
+  @doc """
+  Returns an `Ecto.Changeset` appropriate for updating a
+  `Wayfinder.Accounts.User` entity's email.
+  """
+  @spec update_user_email_changeset(user :: t(), attrs :: map()) :: Ecto.Changeset.t()
+  def update_user_email_changeset(%__MODULE__{} = user, attrs) do
+    user
+    |> cast(attrs, [:email])
+    |> validate_email()
+  end
+
+  @doc """
+  Returns an `Ecto.Changeset` appropriate for updating a
+  `Wayfinder.Accounts.User` entity's password.
+  """
+  @spec update_user_password_changeset(user :: t(), attrs :: map()) :: Ecto.Changeset.t()
+  def update_user_password_changeset(%__MODULE__{} = user, attrs) do
+    user
+    |> cast(attrs, [:password])
+    |> validate_password()
   end
 
   @doc """

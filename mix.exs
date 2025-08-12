@@ -39,8 +39,7 @@ defmodule Wayfinder.MixProject do
       "docs/writing-tips.md",
       "docs/decisions/about.md",
       "docs/decisions/1-customizations-of-phx-gen-auth.md",
-      "docs/decisions/2-formal-attributes.md",
-      "docs/decisions/3-schema-files-and-validations.md"
+      "docs/decisions/2-formal-attributes.md"
     ]
   end
 

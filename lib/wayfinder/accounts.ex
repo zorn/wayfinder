@@ -85,15 +85,11 @@ defmodule Wayfinder.Accounts do
   end
 
   @doc """
-  Returns an `%Ecto.Changeset{}` appropriate for tracking attributes related to
-  creating a `Wayfinder.Accounts.User` entity.
+  Returns an `%Ecto.Changeset{}` appropriate for creating a `Wayfinder.Accounts.User` entity via the `create_user/1` function.
   """
   @spec create_user_changeset(attrs :: create_user_attrs()) :: Ecto.Changeset.t()
   def create_user_changeset(attrs \\ %{}) do
-    %User{}
-    |> cast(attrs, [:email, :password])
-    |> User.validate_email()
-    |> User.validate_password()
+    User.create_changeset(attrs)
   end
 
   @doc """
@@ -230,17 +226,14 @@ defmodule Wayfinder.Accounts do
   end
 
   @doc """
-  Returns an `%Ecto.Changeset{}` appropriate for tracking attributes related to
-  updating a `Wayfinder.Accounts.User` entity's email.
+  Returns an `%Ecto.Changeset{}` appropriate for updating a `Wayfinder.Accounts.User` entity's email via the `update_user_email/2` function.
   """
   @spec update_user_email_changeset(
           user :: User.t(),
           attrs :: update_user_email_attrs()
         ) :: User.changeset()
   def update_user_email_changeset(%User{} = user, attrs \\ %{}) do
-    user
-    |> cast(attrs, [:email])
-    |> User.validate_email()
+    User.update_user_email_changeset(user, attrs)
   end
 
   @doc """
@@ -269,16 +262,14 @@ defmodule Wayfinder.Accounts do
   end
 
   @doc """
-  Returns an `%Ecto.Changeset{}` for changing the user password.
+  Returns an `%Ecto.Changeset{}` appropriate for updating a `Wayfinder.Accounts.User` entity's password via the `update_user_password/2` function.
   """
   @spec update_user_password_changeset(
           user :: User.t(),
           attrs :: update_user_password_attrs()
         ) :: User.changeset()
   def update_user_password_changeset(%User{} = user, attrs \\ %{}) do
-    user
-    |> cast(attrs, [:password])
-    |> User.validate_password()
+    User.update_user_password_changeset(user, attrs)
   end
 
   defp valid_password?(%User{hashed_password: hashed_password}, password)
