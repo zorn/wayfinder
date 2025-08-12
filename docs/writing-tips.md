@@ -1,19 +1,13 @@
-# Naming and Writing Tips
+# Documentation Guidelines
 
-This guide includes some project specific documentation preferences.
+The recommendations and reasoning for how we compose documentation for the project.
 
-See also, the [community recommendations](https://hexdocs.pm/elixir/writing-documentation.html#recommendations) for documentation.
+> #### Info {: .info}
+>
+> See also the [community recommendations](https://hexdocs.pm/elixir/writing-documentation.html#recommendations) for documentation that should be the preferred default unless noted below.
 
-## To Be Documented
+## Inline `@doc` Examples
 
-- What modules should get a `@moduledoc` and which should not? (generally an Elixir library only documents modules it want's it's users to see and will use `@moduledoc false` for [implementation modules](https://github.com/elixir-ecto/ecto/blob/cd0f70b4cdd949767ea7cbe7d635e70917384b38/lib/ecto/repo/transaction.ex#L2).)
-- I'm using `Attempts to...` for my `register_user/1` function but I'm not sure I like that style.
-- When it comes to documentation examples, avoid writing out examples if the sole purpose if to visualize the return value types. Let the typespec do that. Examples that can be `doctest`-ed are best. If you want an example to otherwise provide a copy/pastable starting point for a complex syntax, that is fine too. 
+The standard Phoenix generators tend to generate verbose inline examples inside the `@doc` blocks that are not runnable via `doctest` and don't offer much value over the already required typespecs.
 
-## `@moduledoc`
-
-Do not document every Elixir Module. Only document those modules that represent the intentional API boundary of the system. These include modules like 
-
-<https://hexdocs.pm/elixir/writing-documentation.html#module-attributes>
-
-## `@doc`
+When an example adds clarity over the typespec, do consider adding it. If the example can run using `doctest`, that is even better.

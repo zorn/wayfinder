@@ -26,8 +26,27 @@ defmodule Wayfinder.MixProject do
       docs: [
         # The main page in the docs
         main: "Wayfinder",
-        extras: ["README.md"]
+        extras: extras(),
+        groups_for_extras: groups_for_extras()
       ]
+    ]
+  end
+
+  defp extras do
+    [
+      "README.md",
+      "docs/command-line-history.md",
+      "docs/writing-tips.md",
+      "docs/decisions/about.md",
+      "docs/decisions/1-customizations-of-phx-gen-auth.md",
+      "docs/decisions/2-formal-attributes.md",
+      "docs/decisions/3-schema-files-and-validations.md"
+    ]
+  end
+
+  defp groups_for_extras do
+    [
+      Decisions: ~r/docs\/decisions\/[^\/]+\.md/
     ]
   end
 
