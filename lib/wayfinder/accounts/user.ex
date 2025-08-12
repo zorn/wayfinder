@@ -41,7 +41,9 @@ defmodule Wayfinder.Accounts.User do
     timestamps(type: :utc_datetime_usec)
   end
 
-  @doc false
+  @doc """
+  Validates data expectations for the `:email` field.
+  """
   @spec validate_email(Ecto.Changeset.t()) :: Ecto.Changeset.t()
   def validate_email(%Ecto.Changeset{} = changeset) do
     changeset
@@ -66,7 +68,9 @@ defmodule Wayfinder.Accounts.User do
     end
   end
 
-  @doc false
+  @doc """
+  Validates data expectations for the `:password` field.
+  """
   @spec validate_password(Ecto.Changeset.t()) :: Ecto.Changeset.t()
   def validate_password(%Ecto.Changeset{} = changeset) do
     changeset
