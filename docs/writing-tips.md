@@ -6,7 +6,7 @@ The recommendations and reasoning for how we compose documentation for the proje
 >
 > See also the [community recommendations](https://hexdocs.pm/elixir/writing-documentation.html#recommendations) for documentation that should be the preferred default unless noted below.
 
-## Inline `@doc` Examples
+## Inline Function Documentation Examples
 
 The standard Phoenix generators tend to generate verbose inline examples inside the `@doc` blocks that are not runnable via `doctest` and don't offer much value over the already required typespecs.
 

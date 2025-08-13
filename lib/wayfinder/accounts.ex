@@ -254,8 +254,7 @@ defmodule Wayfinder.Accounts do
 
         Repo.delete_all(from(t in UserToken, where: t.id in ^Enum.map(tokens_to_delete, & &1.id)))
 
-        # By this point these are really `deleted_tokens`.
-        # FIXME: It might be more correct to base this on the return value of the `delete_all`.
+        # By this point these `tokens_to_delete` are really the `deleted_tokens`.
         {:ok, {user, tokens_to_delete}}
       end
     end)

@@ -30,6 +30,10 @@ While the documented (see [Command Line History](command-line-history.html#july-
 
 The default code generator names a function `register_user/1` ([sample](https://github.com/zorn/magic-link-demo/blob/1de3ac787dc7e98721a2e3df468e454a3275d74b/lib/hello/accounts.ex#L77)). While I usually am ok with domain context using business verbs, I thought a more streamlined `create` felt better next to the various `update` counterparts here. When registration was an emailed link, that verb made more sense.
 
+## Change: Renamed  `sudo_mode?/1` to `recently_authenticated?/1`
+
+I think this new name is more express of intent.
+
 ***
 
 Other code cleanup including: added typespecs, updated docs, and relocated changeset functions (opting to keep as much in the main `Wayfinder.Accounts` as possible).
