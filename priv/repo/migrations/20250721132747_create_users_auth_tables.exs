@@ -7,11 +7,16 @@ defmodule Wayfinder.Repo.Migrations.CreateUsersAuthTables do
     create table(:users, primary_key: false) do
       add :id, :binary_id, primary_key: true
       add :email, :citext, null: false
+      # This could be less then the default 255 length, but will leave it for now.
       add :hashed_password, :string
       add :confirmed_at, :utc_datetime_usec
 
       timestamps(type: :utc_datetime_usec)
     end
+
+    # The code generator created validation code to limit emails to 160
+    # characters. Given that I thought I'd add a database-level constraint.
+    execute "ALTER TABLE users ADD CONSTRAINT email_length_check CHECK (char_length(email) <= 160)"
 
     create unique_index(:users, [:email])
 
