@@ -13,6 +13,12 @@ defmodule Wayfinder.MixProject do
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
       listeners: [Phoenix.CodeReloader],
 
+      # Allow the `mix check` (which will run `dialyzer` under a `:test`
+      # `MIX_ENV` to see `ex_unit` modules.)
+      dialyzer: [
+        plt_add_apps: [:ex_unit]
+      ],
+
       # Docs
       name: "Wayfinder",
       source_url: "https://github.com/zorn/wayfinder",
@@ -20,8 +26,26 @@ defmodule Wayfinder.MixProject do
       docs: [
         # The main page in the docs
         main: "Wayfinder",
-        extras: ["README.md"]
+        extras: extras(),
+        groups_for_extras: groups_for_extras()
       ]
+    ]
+  end
+
+  defp extras do
+    [
+      "README.md",
+      "docs/command-line-history.md",
+      "docs/writing-tips.md",
+      "docs/decisions/about.md",
+      "docs/decisions/1-customizations-of-phx-gen-auth.md",
+      "docs/decisions/2-formal-attributes.md"
+    ]
+  end
+
+  defp groups_for_extras do
+    [
+      Decisions: ~r/docs\/decisions\/[^\/]+\.md/
     ]
   end
 
@@ -44,6 +68,12 @@ defmodule Wayfinder.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      # For TDD.
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
+
+      # For password hashing.
+      {:argon2_elixir, "~> 4.0"},
+
       # For docs
       {:ex_doc, "~> 0.34", only: :dev, runtime: false, warn_if_outdated: true},
 
@@ -104,7 +134,14 @@ defmodule Wayfinder.MixProject do
         "phx.digest"
       ],
       # A single task simulating the CI checks that will run.
-      check: ["credo --strict", "dialyzer", "sobelow"]
+      check: ["credo --strict", "dialyzer", "sobelow", "test"]
     ]
+  end
+
+  def cli do
+    # Using the MIX_ENV of `:test` for the check alias is required for testing.
+    # This does mean that dialyzer and sobelow will run in test mode which is
+    # not what you typically see when running `mix dialyzer` or `mix sobelow`.
+    [preferred_envs: [check: :test]]
   end
 end

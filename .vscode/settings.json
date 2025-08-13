@@ -2,6 +2,7 @@
     "cSpell.words": [
         "amannn",
         "daisyui",
+        "doctest",
         "Ecto",
         "erlef",
         "esbuild",
@@ -9,6 +10,8 @@
         "isready",
         "loadpaths",
         "MAILGUN",
+        "moduledoc",
+        "Oban",
         "oklch",
         "plts",
         "prefersdark",
@@ -16,6 +19,7 @@
         "sobelow",
         "tailwindlabs",
         "topbar",
+        "typespecs",
         "Uncategorized",
         "Valim",
         "Wayfinder"
