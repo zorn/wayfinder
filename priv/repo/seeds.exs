@@ -9,3 +9,10 @@
 #
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
+
+{:ok, _user} =
+  Wayfinder.Accounts.create_user(%{
+    email: "mike@mikezornek.com",
+    password: "supersecretpassword",
+    password_confirmation: "supersecretpassword"
+  })
